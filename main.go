@@ -14,7 +14,29 @@ func main() {
 	Topic := "test" // Replace with your topic name
 
 	schemaRegistryClient := srclient.CreateSchemaRegistryClient(SchemaRegistryURL)
-	userSchema, err := schemaRegistryClient.CreateSchema("user", `{"type":"record","name":"User","fields":[{"name":"id","type":"int"},{"name":"email","type":"string"},{"name":"age","type":"int","default":1}]}`, srclient.Avro)
+	productSchema, err := schemaRegistryClient.CreateSchema("product", `
+	{
+	  "definitions" : {
+		"record:product" : {
+		  "type" : "object",
+		  "required" : [ "name", "calories" ],
+		  "additionalProperties" : false,
+		  "properties" : {
+			"name" : {"type" : "string"},
+			"calories" : {"type" : "number"},
+			"colour" : {"type" : "string"}
+		  }
+		}
+	  },
+	  "$ref" : "#/definitions/record:product"
+	}
+	`, srclient.Json)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	userSchema, err := schemaRegistryClient.CreateSchema("user", `{"type":"record","name":"User","fields":[{"name":"id","type":"int", "description": "user의 고유번호"},{"name":"email","type":"string"},{"name":"age","type":"int","default":1}]}`, srclient.Avro)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -31,19 +53,19 @@ func main() {
 	}
 	defer p.Close()
 
-	// Our 'User' record to send
-	userRecord := map[string]interface{}{
-		"id":    1,
-		"email": "user@gmail.com",
-		"age":   30,
+	// "Product" record to send
+	productRecord := map[string]interface{}{
+		"name":     "Macbook",
+		"calories": "colories",
+		"colour":   "colour",
 	}
-	binary, err := userSchema.Codec().BinaryFromNative(nil, userRecord)
+	// TODO: Avro codec을 사용해서 Error 발생
+	binary, err := productSchema.Codec().BinaryFromNative(nil, productRecord)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	// Produce message to Kafka
 	msg := &kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &Topic, Partition: kafka.PartitionAny},
 		Value:          binary,
@@ -53,6 +75,30 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	// 'User' record to send
+	userRecord := map[string]interface{}{
+		"id":    1,
+		"email": "user@gmail.com",
+		"age":   30,
+	}
+	binary, err = userSchema.Codec().BinaryFromNative(nil, userRecord)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	msg = &kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &Topic, Partition: kafka.PartitionAny},
+		Value:          binary,
+	}
+
+	err = p.Produce(msg, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	// "Agent" record to send
 	agentRecord := map[string]interface{}{
 		"id":    1,
 		"email": "agent@gmail.com",
