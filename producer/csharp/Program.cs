@@ -29,10 +29,8 @@ public class Program
                .SetKeySerializer(new AvroSerializer<string>(schemaRegistry))
                .SetValueSerializer(new AvroSerializer<GenericRecord>(schemaRegistry, avroSerializerConfig))
                .Build();
-        var record = new GenericRecord(schema);
-        record.Add("name", user.name);
-        record.Add("favorite_number", user.favorite_number);
-        record.Add("favorite_color", user.favorite_color);
+
+        var record = Program.ConvertToGenericRecord(user, schema);
 
         await producer.ProduceAsync("test",
                                     new Message<string, GenericRecord>
@@ -47,5 +45,30 @@ public class Program
                                                               : $"error producing message: {task.Exception.Message}");
                                     },
                                     cts.Token);
+    }
+    
+    public static GenericRecord ConvertToGenericRecord<T>(T obj, Avro.Schema schema) where T : class
+    {
+        if (schema is not RecordSchema recordSchema)
+        {
+            throw new ArgumentException("Schema must be a record schema");
+        }
+
+        var genericRecord = new GenericRecord(recordSchema);
+
+        foreach (var field in recordSchema.Fields)
+        {
+            var prop = typeof(T).GetProperty(field.Name);
+
+            if (prop == null)
+            {
+                continue;
+            }
+
+            var value = prop.GetValue(obj);
+            genericRecord.Add(field.Name, value);
+        }
+
+        return genericRecord;
     }
 }

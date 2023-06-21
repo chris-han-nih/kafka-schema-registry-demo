@@ -8,6 +8,12 @@ public class Program
 {
     static async Task Main(string[] args)
     {
+        var consumerConfig = new ConsumerConfig
+                             {
+                                 BootstrapServers = "localhost:29092",
+                                 GroupId = "test-consumer-group",
+                                 AutoOffsetReset = AutoOffsetReset.Earliest
+                             };
         var schemaRegistryConfig = new SchemaRegistryConfig { Url = "http://localhost:8081" };
 
         var cts = new CancellationTokenSource();
@@ -15,12 +21,7 @@ public class Program
 
         using var schemaRegistry = new CachedSchemaRegistryClient(schemaRegistryConfig);
         using var consumer =
-            new ConsumerBuilder<string, GenericRecord>(new ConsumerConfig
-                                                       {
-                                                           BootstrapServers = "localhost:29092",
-                                                           GroupId = "test-consumer-group",
-                                                           AutoOffsetReset = AutoOffsetReset.Earliest
-                                                       })
+            new ConsumerBuilder<string, GenericRecord>(consumerConfig)
                .SetValueDeserializer(new AvroDeserializer<GenericRecord>(schemaRegistry).AsSyncOverAsync())
                .Build();
         consumer.Subscribe("test");
@@ -33,12 +34,8 @@ public class Program
                     var consumeResult = consumer.Consume(cts.Token);
                     Console.WriteLine($"Consumed record with value {consumeResult.Message.Value}");
                     
-                    var record = consumeResult.Message.Value;
-                    Console.WriteLine($"name: {record["name"]}, favorite number: {record["favorite_number"]}, favorite color: {record["favorite_color"]}");
-                    
-                    // https://github.com/AdrianStrugala/AvroConvert/blob/master/docs/Documentation.md
-                    // var user = AvroConvert.DeserializeHeadless<User>(record, schema);
-                    // Console.WriteLine($"name: {user.name}, favorite number: {user.favorite_number}, favorite color: {user.favorite_color}");
+                    var user = Program.MapToClass<User>(consumeResult.Message.Value);
+                    Console.WriteLine($"name: {user.name}, favorite number: {user.favorite_number}, favorite color: {user.favorite_color}");
                 }
                 catch (ConsumeException e)
                 {
@@ -50,5 +47,22 @@ public class Program
         {
             consumer.Close();
         }
+    }
+
+    private static T MapToClass<T>(GenericRecord genericRecord) where T : class, new()
+    {
+        var outputObject = new T();
+        var type = typeof(T);
+
+        foreach (var field in genericRecord.Schema)
+        {
+            var prop = type.GetProperty(field.Name);
+            if (prop != null && genericRecord.TryGetValue(field.Name, out var fieldValue))
+            {
+                prop.SetValue(outputObject, Convert.ChangeType(fieldValue, prop.PropertyType), null);
+            }
+        }
+
+        return outputObject;
     }
 }
