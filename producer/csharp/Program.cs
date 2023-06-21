@@ -7,13 +7,13 @@ using csharp.Model;
 
 public class Program
 {
-    private static void Main()
+    private static async Task Main()
     {
         var user = new User
                    {
-                          name = "John",
+                          name = "Dave",
                           favorite_number = 100L,
-                          favorite_color = "green"
+                          favorite_color = "blue"
                      };
 
         var schema = (RecordSchema)user.Schema;
@@ -27,21 +27,25 @@ public class Program
         using var producer =
             new ProducerBuilder<string, GenericRecord>(producerConfig)
                .SetKeySerializer(new AvroSerializer<string>(schemaRegistry))
-                .SetValueSerializer(new AvroSerializer<GenericRecord>(schemaRegistry, avroSerializerConfig))
-                .Build();
+               .SetValueSerializer(new AvroSerializer<GenericRecord>(schemaRegistry, avroSerializerConfig))
+               .Build();
         var record = new GenericRecord(schema);
-        record.Add("name", "Chris");
-        record.Add("favorite_number", 100L);
-        record.Add("favorite_color", "red");
-        
-        producer.ProduceAsync("test", new Message<string, GenericRecord> { Key = record["name"].ToString(), Value = record })
-                .ContinueWith(task =>
-                              {
-                                  Console.WriteLine(!task.IsFaulted
-                                                        ? $"produced to: {task.Result.TopicPartitionOffset}"
-                                                        : $"error producing message: {task.Exception.Message}");
-                              },
-                              cts.Token);
-        Console.ReadKey();
+        record.Add("name", user.name);
+        record.Add("favorite_number", user.favorite_number);
+        record.Add("favorite_color", user.favorite_color);
+
+        await producer.ProduceAsync("test",
+                                    new Message<string, GenericRecord>
+                                    {
+                                        Key = record["name"].ToString(),
+                                        Value = record
+                                    })
+                      .ContinueWith(task =>
+                                    {
+                                        Console.WriteLine(!task.IsFaulted
+                                                              ? $"produced to: {task.Result.TopicPartitionOffset}"
+                                                              : $"error producing message: {task.Exception.Message}");
+                                    },
+                                    cts.Token);
     }
 }
