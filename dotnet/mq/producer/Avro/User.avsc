@@ -1,0 +1,15 @@
+{
+  "namespace": "nsus.serialization.avro",
+  "name": "User",
+  "type": "record",
+  "fields": [
+	{
+	  "name": "name",
+	  "type": "string"
+	},
+	{
+	  "name": "favorite_number",
+	  "type": "long"
+	}
+  ]
+}

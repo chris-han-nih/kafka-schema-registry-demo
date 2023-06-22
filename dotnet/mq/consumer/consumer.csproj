@@ -12,4 +12,9 @@
     <PackageReference Include="Confluent.SchemaRegistry.Serdes" Version="1.3.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\converter\converter.csproj" />
+    <ProjectReference Include="..\model\model.csproj" />
+  </ItemGroup>
+
 </Project>
