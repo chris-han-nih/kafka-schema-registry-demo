@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "agent",
+  "fields": [
+    {
+      "name": "id",
+      "type": "long"
+    },
+    {
+      "name": "email",
+      "type": "string"
+    },
+    {
+      "name": "group",
+      "type": "string"
+    }
+  ]
+}
