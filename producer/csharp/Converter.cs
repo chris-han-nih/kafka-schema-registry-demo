@@ -1,6 +1,6 @@
 namespace csharp;
 
-public sealed class Converter
+public abstract class Converter
 {
     public static Avro.Generic.GenericRecord ToGenericRecord<T>(T obj, Avro.Schema schema) where T : class
     {
