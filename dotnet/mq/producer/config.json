@@ -1,0 +1,7 @@
+{
+  "KafkaConfiguration": {
+	"Brokers": "localhost:29092",
+	"ClientId": "test",
+	"Topic": "test"
+  }
+}
