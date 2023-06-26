@@ -13,14 +13,15 @@ public class Program
         var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory())
                                                 .AddJsonFile("config.json", optional: false);
         var config = builder.Build();
-        await new HostBuilder().ConfigureServices((_, services) =>
-                                                  {
-                                                      services.AddOptions();
-                                                      services
-                                                         .Configure<ProducerConfiguration>(config.GetSection("KafkaConfiguration"));
-                                                      services.AddHostedService<MessageGenerateService>();
-                                                      services.AddHostedService<KafkaProducerService>();
-                                                  })
-                               .RunConsoleAsync();
+        await Program.CreateHostBuilder(config).Build().RunAsync();
     }
+    public static IHostBuilder CreateHostBuilder(IConfigurationRoot config) =>
+        Host.CreateDefaultBuilder()
+            .ConfigureServices((_, services) =>
+                               {
+                                   services.AddOptions();
+                                   services.Configure<ProducerConfiguration>(config.GetSection("KafkaConfiguration"));
+                                   services.AddHostedService<KafkaProducerService>();
+                                   services.AddHostedService<MessageGenerateService>();
+                               });
 }
