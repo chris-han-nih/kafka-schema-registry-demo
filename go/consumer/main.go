@@ -17,7 +17,7 @@ func main() {
 		panic(err)
 	}
 	//c.SubscribeTopics([]string{"test", "^aRegex.*[Tt]opic"}, nil)
-	c.SubscribeTopics([]string{"test"}, nil)
+	_ = c.SubscribeTopics([]string{"test"}, nil)
 	// 2) Create a instance of the client to retrieve the schemas for each message
 	schemaRegistryClient := srclient.CreateSchemaRegistryClient("http://localhost:8081")
 
@@ -39,6 +39,4 @@ func main() {
 			fmt.Printf("Error consuming the message: %v (%v)\n", err, msg)
 		}
 	}
-
-	c.Close()
 }
