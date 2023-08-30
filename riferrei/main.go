@@ -14,7 +14,15 @@ func main() {
 	Topic := "test" // Replace with your topic name
 
 	schemaRegistryClient := srclient.CreateSchemaRegistryClient(SchemaRegistryURL)
-	userSchema, err := schemaRegistryClient.CreateSchema("user", `{"type":"record","name":"User","fields":[{"name":"id","type":"int"},{"name":"email","type":"string"},{"name":"age","type":"int","default":1}]}`, srclient.Avro)
+	userSchema, err := schemaRegistryClient.CreateSchema("user",
+		`{
+						"type":"record",
+						"name":"User",
+						"fields":[
+							{"name":"id","type":"int"},
+							{"name":"age","type":"int","default":1}
+						]
+					}`, srclient.Avro)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -25,7 +33,7 @@ func main() {
 		return
 	}
 	// Create Kafka producer
-	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost:29092"})
+	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost:9092"})
 	if err != nil {
 		panic(err)
 	}
@@ -33,9 +41,8 @@ func main() {
 
 	// Our 'User' record to send
 	userRecord := map[string]interface{}{
-		"id":    1,
-		"email": "user@gmail.com",
-		"age":   30,
+		"id":  1,
+		"age": 30,
 	}
 	binary, err := userSchema.Codec().BinaryFromNative(nil, userRecord)
 	if err != nil {

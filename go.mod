@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/confluentinc/confluent-kafka-go v1.9.2
+	github.com/linkedin/goavro v2.1.0+incompatible
 	github.com/riferrei/srclient v0.6.0
 )
 
