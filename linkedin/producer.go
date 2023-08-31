@@ -43,7 +43,7 @@ func main() {
 		"Errors":    nil,
 		"Address": map[string]interface{}{
 			"my.namespace.com.address": map[string]interface{}{
-				"Address1": "123 Main St",
+				"Address1": "eunjuro",
 				"City":     "Springfield",
 				"State":    "IL",
 				"Zip":      12345,
