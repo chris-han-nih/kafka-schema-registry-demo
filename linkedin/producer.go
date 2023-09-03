@@ -8,26 +8,26 @@ import (
 func main() {
 	// Define Avro schema as a single definition
 	schemaDefinition := `
-{
-	"namespace": "my.namespace.com",
-	"type":	"record",
-	"name": "identity",
-	"fields": [
-		{ "name": "FirstName", "type": "string"},
-		{ "name": "LastName", "type": "string"},
-		{ "name": "Errors", "type": ["null", {"type":"array", "items":"string"}], "default": null },
-		{ "name": "Address", "type": ["null",{
-			"type":	"record",
-			"name": "address",
-			"fields": [
-				{ "name": "Address1", "type": "string" },
-				{ "name": "City", "type": "string" },
-				{ "name": "State", "type": "string" },
-				{ "name": "Zip", "type": "int" }
-			]
-		}],"default":null}
-	]
-}`
+	{
+		"namespace": "my.namespace.com",
+		"type":	"record",
+		"name": "identity",
+		"fields": [
+			{ "name": "FirstName", "type": "string"},
+			{ "name": "LastName", "type": "string"},
+			{ "name": "Errors", "type": ["null", {"type":"array", "items":"string"}], "default": null },
+			{ "name": "Address", "type": ["null",{
+				 "type":	"record",
+				 "name": "address",
+				 "fields": [
+					 { "name": "Address1", "type": "string" },
+					 { "name": "City", "type": "string" },
+					 { "name": "State", "type": "string" },
+					 { "name": "Zip", "type": "int" }
+				 ]
+			}],"default":null}
+		]
+	}`
 
 	// Create Schema Registry client
 	schemaRegistryClient := srclient.CreateSchemaRegistryClient("http://localhost:8081")
@@ -62,10 +62,13 @@ func main() {
 
 	// Produce message
 	topic := "test_topic"
-	p.Produce(&kafka.Message{
+	err = p.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 		Value:          binary,
 	}, nil)
+	if err != nil {
+		return
+	}
 
 	p.Flush(15 * 1000)
 }
